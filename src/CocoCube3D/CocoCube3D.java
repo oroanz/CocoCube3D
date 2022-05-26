@@ -19,7 +19,7 @@ import javax.swing.JPanel;
 public class CocoCube3D extends JFrame
 {
 	private final Container contentPane = getContentPane();
-	private double scale = 1.0;
+	private final Cube theCube;
 
 
 	public CocoCube3D ()
@@ -31,7 +31,11 @@ public class CocoCube3D extends JFrame
 		setLocationRelativeTo(null); // Spawns the window at the center of the screen.
 		setVisible(true);
 
-		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.PAGE_AXIS));
+		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.X_AXIS));
+
+		theCube = new Cube(100, 45);
+		theCube.setTranslation(640, 360, 0);
+		theCube.setRotation(180, 0, 0);
 		
 		setup();
 	}
@@ -44,7 +48,7 @@ public class CocoCube3D extends JFrame
 	{
 		JPanel buttonRow = new JPanel();
 
-		buttonRow.setLayout(new BoxLayout(buttonRow, BoxLayout.X_AXIS));
+		buttonRow.setLayout(new BoxLayout(buttonRow, BoxLayout.Y_AXIS));
 
 		buttonRow.add(Box.createHorizontalGlue());
 		buttonRow.add(new JButton("Translate"));
@@ -54,7 +58,7 @@ public class CocoCube3D extends JFrame
 		buttonRow.add(Box.createHorizontalGlue());
 
 		contentPane.add(buttonRow);
-		contentPane.add(new Cube(100));
+		contentPane.add(this.theCube);
 		contentPane.revalidate();
 		contentPane.repaint();
 	}

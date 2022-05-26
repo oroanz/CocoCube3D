@@ -14,6 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 
 import CocoCube3D.util.IdentityMatrix;
+import CocoCube3D.util.IdentityMatrixEffects;
 import CocoCube3D.util.Point2D;
 import CocoCube3D.util.Point3D;
 
@@ -27,16 +28,32 @@ import CocoCube3D.util.Point3D;
 public class Cube extends JPanel
 {
 	private IdentityMatrix[] displacements;
-	private IdentityMatrix effects;
+	private IdentityMatrixEffects effects;
 	private Point3D[] coordinates;
+	private double angle, scale, x, y, z, rx, ry, rz;
 
 
+	/**
+	 * Generates all the data needed to form the cube based on the "displacements.json"
+	 * file, the length of each stroke and the angle of the Z axis perspective.
+	 * 
+	 * @param length The length (in pixels) of the stroke to draw the cube.
+	 * @param angle The angle (in degrees) of the Z axis perspective.
+	 */
 	@SuppressWarnings("unchecked")
-	public Cube (int length, IdentityMatrix effects)
+	public Cube (int length, double angle)
 	{
 		this.coordinates = new Point3D[16];
 		this.displacements = new IdentityMatrix[16];
-		this.effects = effects;
+		this.effects = new IdentityMatrixEffects();
+		this.angle = Math.toRadians(angle);
+		this.x = 0.0;
+		this.y = 0.0;
+		this.z = 0.0;
+		this.rx = 0.0;
+		this.ry = 0.0;
+		this.rz = 0.0;
+		this.scale = 1.0;
 
 		setLayout(null);
 
@@ -66,34 +83,102 @@ public class Cube extends JPanel
 		}
 	}
 
-	public Cube (int length) { this(length, new IdentityMatrix()); }
+
+	/**
+	 * Modifies the scale of the cube by the given scale factor.
+	 * 
+	 * @param scale The scale factor. It may not be less than 0.
+	 */
+	public void setZoom (double scale)
+	{
+		if (scale < 0.0)
+			return;
+
+		this.effects.zoom(scale);
+		this.scale = scale;
+	}
+
+	/**
+	 * Sets the new point in X, Y and Z where the cube will be drawn.
+	 * 
+	 * @param x The point in X, relative to this JPanel instance.
+	 * @param y The point in Y, relative to this JPanel instance.
+	 * @param z The point in Z, relative to this JPanel instance.
+	 */
+	public void setTranslation (double x, double y, double z)
+	{
+		this.effects
+			.translateX(x)
+			.translateY(y)
+			.translateZ(z);
+
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+
+	/**
+	 * Sets the rotation in the X, Y and Z axis, respective to the anchor point.
+	 * 
+	 * @param rx The angle to rotate in X.
+	 * @param ry The angle to rotate in Y.
+	 * @param rz The angle to rotate in Z.
+	 */
+	public void setRotation (double rx, double ry, double rz)
+	{
+		this.effects
+			.rotateX(Math.toRadians(rx))
+			.rotateY(Math.toRadians(ry))
+			.rotateZ(Math.toRadians(rz));
+
+		this.rx = rx;
+		this.ry = ry;
+		this.rz = rz;
+	}
+
+	
+	public double getZoom () { return scale; }
+	public double getTranslationX () { return x; }
+	public double getTranslationY () { return y; }
+	public double getTranslationZ () { return z; }
+	public double getRotationX () { return rx; }
+	public double getRotationY () { return ry; }
+	public double getRotationZ () { return rz; }
 
 
 	@Override
 	protected void paintComponent (Graphics g)
 	{
 		Graphics2D g2d = (Graphics2D) g;
+		IdentityMatrix prev = effects.getMatrix();
 
 		g2d.setStroke(new BasicStroke(2));
-
-		IdentityMatrix prev = effects;
 
 		for (int i = 0; i < displacements.length; i++)
 		{
 			IdentityMatrix next = prev.times(displacements[i]);
 
-			coordinates[i] = new Point3D(next.get(0, 3), next.get(1, 3), next.get(2, 3));
+			coordinates[i] = new Point3D(
+				next.get(0, 3),
+				next.get(1, 3),
+				next.get(2, 3)
+			);
 
 			prev = next;
 		}
 
-		Point2D prevPoint = coordinates[0].toPoint2D(Math.toRadians(30));
+		Point2D prevPoint = coordinates[0].toPoint2D(this.angle);
 
 		for (int i = 1; i < coordinates.length; i++)
 		{
-			Point2D nextPoint = coordinates[i].toPoint2D(Math.toRadians(30));
+			Point2D nextPoint = coordinates[i].toPoint2D(this.angle);
 
-			g2d.drawLine((int) prevPoint.getX(), (int) prevPoint.getY(), (int) nextPoint.getX(), (int) nextPoint.getY());
+			g2d.drawLine(
+				(int) prevPoint.getX(),
+				(int) prevPoint.getY(),
+				(int) nextPoint.getX(),
+				(int) nextPoint.getY()
+			);
 
 			prevPoint = nextPoint;
 		}
