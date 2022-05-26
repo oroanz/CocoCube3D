@@ -129,11 +129,13 @@ public class IdentityMatrixEffects
 		IdentityMatrix result = new IdentityMatrix();
 
 		result.set(0, 0, Math.cos(angle));
-		result.set(0, 1, Math.sin(angle));
-		result.set(1, 0, -Math.sin(angle));
+		result.set(0, 1, -Math.sin(angle));
+		result.set(1, 0, Math.sin(angle));
 		result.set(1, 1, Math.cos(angle));
 		result.set(2, 2, 1.0);
 		result.set(3, 3, 1.0);
+
+		matrix = matrix.times(result);
 
 		return this;
 	}
@@ -145,7 +147,7 @@ public class IdentityMatrixEffects
 	 * @param zoom The amount of scaling in all the axes.
 	 * @return The same instance of the class.
 	 */
-	public IdentityMatrixEffects zoom (double zoom)
+	public IdentityMatrixEffects scale (double zoom)
 	{
 		if (zoom < 0.0)
 			zoom = 0.0;

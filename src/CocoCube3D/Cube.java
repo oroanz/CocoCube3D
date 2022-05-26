@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.BasicStroke;
+import java.awt.Color;
 
 import javax.swing.JPanel;
 
@@ -28,7 +29,7 @@ import CocoCube3D.util.Point3D;
 public class Cube extends JPanel
 {
 	private IdentityMatrix[] displacements;
-	private IdentityMatrixEffects effects;
+	private IdentityMatrixEffects transformations;
 	private Point3D[] coordinates;
 	private double angle, scale, x, y, z, rx, ry, rz;
 
@@ -45,17 +46,10 @@ public class Cube extends JPanel
 	{
 		this.coordinates = new Point3D[16];
 		this.displacements = new IdentityMatrix[16];
-		this.effects = new IdentityMatrixEffects();
 		this.angle = Math.toRadians(angle);
-		this.x = 0.0;
-		this.y = 0.0;
-		this.z = 0.0;
-		this.rx = 0.0;
-		this.ry = 0.0;
-		this.rz = 0.0;
-		this.scale = 1.0;
 
-		setLayout(null);
+		resetTransformations();
+		setSize(1280, 620);
 
 		// The following process is used to parse the JSON file.
 		// Said JSON file contains the displacements requiered to generate the cube.
@@ -66,6 +60,7 @@ public class Cube extends JPanel
 			JSONArray displacementsArray = (JSONArray) new JSONParser().parse(fr);
 			Iterator<JSONArray> displacementsIterator = displacementsArray.iterator();
 
+			// The following loop parses the JSON file and generates the cube.
 			for (int i = 0; displacementsIterator.hasNext(); i++)
 			{
 				JSONArray displacement = displacementsIterator.next();
@@ -85,17 +80,33 @@ public class Cube extends JPanel
 
 
 	/**
+	 * Resets the transformations applied to the cube.
+	 */
+	public void resetTransformations ()
+	{
+		transformations = new IdentityMatrixEffects();
+
+		x = 0.0;
+		y = 0.0;
+		z = 0.0;
+		rx = 0.0;
+		ry = 0.0;
+		rz = 0.0;
+		scale = 1.0;
+	}
+
+	/**
 	 * Modifies the scale of the cube by the given scale factor.
 	 * 
-	 * @param scale The scale factor. It may not be less than 0.
+	 * @param zoom The scale factor. It may not be less than 0.
 	 */
-	public void setZoom (double scale)
+	public void setScale (double zoom)
 	{
-		if (scale < 0.0)
+		if (zoom < 0)
 			return;
 
-		this.effects.zoom(scale);
-		this.scale = scale;
+		transformations.scale(zoom);
+		scale = zoom;
 	}
 
 	/**
@@ -107,7 +118,7 @@ public class Cube extends JPanel
 	 */
 	public void setTranslation (double x, double y, double z)
 	{
-		this.effects
+		transformations
 			.translateX(x)
 			.translateY(y)
 			.translateZ(z);
@@ -126,7 +137,7 @@ public class Cube extends JPanel
 	 */
 	public void setRotation (double rx, double ry, double rz)
 	{
-		this.effects
+		transformations
 			.rotateX(Math.toRadians(rx))
 			.rotateY(Math.toRadians(ry))
 			.rotateZ(Math.toRadians(rz));
@@ -136,8 +147,10 @@ public class Cube extends JPanel
 		this.rz = rz;
 	}
 
-	
-	public double getZoom () { return scale; }
+	// These are your usual get methods.
+
+	public double getAngle () { return Math.toDegrees(angle); }
+	public double getScale () { return scale; }
 	public double getTranslationX () { return x; }
 	public double getTranslationY () { return y; }
 	public double getTranslationZ () { return z; }
@@ -145,15 +158,19 @@ public class Cube extends JPanel
 	public double getRotationY () { return ry; }
 	public double getRotationZ () { return rz; }
 
+	public void setAngle (double angle) { this.angle = Math.toRadians(angle); }
+
 
 	@Override
 	protected void paintComponent (Graphics g)
 	{
 		Graphics2D g2d = (Graphics2D) g;
-		IdentityMatrix prev = effects.getMatrix();
+		IdentityMatrix prev = transformations.getMatrix();
 
-		g2d.setStroke(new BasicStroke(2));
+		g2d.setStroke(new BasicStroke(1));
+		g2d.setColor(Color.WHITE);
 
+		// The following loop establishes the coordinates of the cube.
 		for (int i = 0; i < displacements.length; i++)
 		{
 			IdentityMatrix next = prev.times(displacements[i]);
@@ -167,11 +184,13 @@ public class Cube extends JPanel
 			prev = next;
 		}
 
-		Point2D prevPoint = coordinates[0].toPoint2D(this.angle);
+		Point2D prevPoint = coordinates[0].toPoint2D(angle);
 
+		// The following loop draws the cube.
 		for (int i = 1; i < coordinates.length; i++)
 		{
-			Point2D nextPoint = coordinates[i].toPoint2D(this.angle);
+			// The tridimensional point is parsed to a 2D point using the angle of the Z axis.
+			Point2D nextPoint = coordinates[i].toPoint2D(angle);
 
 			g2d.drawLine(
 				(int) prevPoint.getX(),
